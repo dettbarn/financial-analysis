@@ -4,39 +4,16 @@
 function analyse()	
 	SetDataFolder root:
 	
-	// assign type where pattern matches
-	WAVE/T Verwendungszweck, Patterns, Typen, Name_Zahlungsbeteiligter
-	WAVE Betrag	
-	SVAR/SDFR=root:config accountOwner
-	Duplicate/O/T Verwendungszweck Typ
-	Typ = ""
-	int i, iptr
-	int nomatch = 0
-	int total = DimSize(Betrag, 0)
-	int nptr = DimSize(Patterns, 0)
-	for(i = 0; i < total; i += 1)
-		if(StringMatch(Name_Zahlungsbeteiligter[i], "*" + accountOwner + "*")) // special logic for transfer without subject
-			Typ[i] = "Sparen/Investment"
-			continue
-		endif
-		for(iptr = 0; iptr < nptr; iptr += 1)
-			if(StringMatch(Verwendungszweck[i], Patterns[iptr]))
-				Typ[i] = Typen[iptr]
-				break
-			endif			
-			if(iptr == nptr - 1) // last pattern checked, nothing found
-				nomatch += 1
-			endif
-		endfor
-	endfor
-	Variable match = total - nomatch
-	Variable matchPercentage = 100*match/total
-	print match , "/", total, "    (" , matchPercentage , "%)"
+	assignTypeWherePatternMatches()
 	
 	// collect amounts for types
+	Wave/T Verwendungszweck, Typ
+	Wave Betrag
 	Make/O/N=0/T GesamtTyp
 	Make/O/N=0 GesamtBetrag
-	for(i = 0; i < total; i += 1)
+	int i
+	int nBuchungen = DimSize(Betrag, 0)
+	for(i = 0; i < nBuchungen; i += 1)
 		int found = 0
 		int ityp
 		for(ityp = 0; ityp < DimSize(GesamtTyp, 0); ityp += 1)
@@ -53,6 +30,7 @@ function analyse()
 	
 	// assign groups
 	Wave/T GesamtGruppe, MapTypGruppe
+	int iptr
 	for(i = 0; i < DimSize(GesamtTyp, 0); i += 1)
 		for(iptr = 0; iptr < DimSize(MapTypGruppe, 0); iptr += 1)
 			if(StringMatch(GesamtTyp[i], MapTypGruppe[iptr][0]))
@@ -72,7 +50,7 @@ function analyse()
 	Make/O/N=0/T Unkateg_Name_Zahlungsbeteiligter, Unkateg_Verwendungszweck
 	Make/O/N=0 Unkateg_Betrag
 	WAVE/T Name_Zahlungsbeteiligter	
-	for(i = 0; i < total; i += 1)
+	for(i = 0; i < nBuchungen; i += 1)
 		if(StringMatch("", Typ[i]))
 			appendTo_T(Name_Zahlungsbeteiligter[i], Unkateg_Name_Zahlungsbeteiligter)
 			appendTo_T(Verwendungszweck[i], Unkateg_Verwendungszweck)
@@ -83,7 +61,7 @@ function analyse()
 	// collect amounts for groups
 	Make/O/N=0/T Gruppen
 	Make/O/N=0 GruppenBetragProMonat
-	total = DimSize(GesamtTyp, 0)
+	int total = DimSize(GesamtTyp, 0)
 	for(i = 0; i < total; i += 1)
 		found = 0
 		int igruppe
@@ -107,6 +85,38 @@ function analyse()
 	GesamtBetragProMonat = -GesamtBetragProMonat
 	GruppenBetragProMonat = -GruppenBetragProMonat		
 end
+//=================================================================
+Function assignTypeWherePatternMatches()
+	WAVE/T Verwendungszweck, Patterns, Typen, Name_Zahlungsbeteiligter
+	WAVE Betrag
+	SVAR/SDFR=root:config accountOwner
+	Duplicate/O/T Verwendungszweck Typ
+	Typ = ""
+	int iBuchung, iPattern
+	int nomatch = 0
+	int nBuchungen = DimSize(Betrag, 0)
+	int nPatterns = DimSize(Patterns, 0)
+	
+	for(iBuchung = 0; iBuchung < nBuchungen; iBuchung += 1)
+		if(StringMatch(Name_Zahlungsbeteiligter[iBuchung], "*" + accountOwner + "*")) // special logic for transfer without subject
+			Typ[iBuchung] = "Sparen/Investment"
+			continue
+		endif
+		for(iPattern = 0; iPattern < nPatterns; iPattern += 1)
+			if(StringMatch(Verwendungszweck[iBuchung], Patterns[iPattern]))
+				Typ[iBuchung] = Typen[iPattern]
+				break
+			endif
+			if(iPattern == nPatterns - 1) // last pattern checked, nothing found
+				nomatch += 1
+			endif
+		endfor
+	endfor
+	
+	Variable match = nBuchungen - nomatch
+	Variable matchPercentage = 100*match/nBuchungen
+	print match , "/", nBuchungen, "    (", matchPercentage, "%)"
+End
 //=================================================================
 Function Graph0()
 	wave GruppenBetragProMonat
