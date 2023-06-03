@@ -12,26 +12,14 @@ Function analyse()
 	
 	relateToMonthAndSortByAmount()
 	
-	// look where anything is left
-	Wave/T Verwendungszweck, Typ, Name_Zahlungsbeteiligter
-	Wave Betrag
-	Make/O/N=0/T Unkateg_Name_Zahlungsbeteiligter, Unkateg_Verwendungszweck
-	Make/O/N=0 Unkateg_Betrag
-	int i
-	int nBuchungen = DimSize(Betrag, 0)	
-	for(i = 0; i < nBuchungen; i += 1)
-		if(StringMatch("", Typ[i]))
-			appendTo_T(Name_Zahlungsbeteiligter[i], Unkateg_Name_Zahlungsbeteiligter)
-			appendTo_T(Verwendungszweck[i], Unkateg_Verwendungszweck)
-			appendTo(Betrag[i], Unkateg_Betrag)
-		endif
-	endfor
+	collectUncategorizedTransactions()
 
 	// collect amounts for groups
 	Wave/T GesamtTyp, GesamtGruppe
 	Wave GesamtBetragProMonat
 	Make/O/N=0/T Gruppen
 	Make/O/N=0 GruppenBetragProMonat
+	int i
 	int total = DimSize(GesamtTyp, 0)
 	for(i = 0; i < total; i += 1)
 		int found = 0
@@ -134,6 +122,22 @@ Function relateToMonthAndSortByAmount()
 	GesamtBetragProMonat /= 12
 	GesamtBetragProMonat = (round(GesamtBetragProMonat*100))/100
 	SORT GesamtBetrag, GesamtBetrag, GesamtBetragProMonat, GesamtTyp, GesamtGruppe
+End
+//=================================================================
+Function collectUncategorizedTransactions()
+	Wave/T Verwendungszweck, Typ, Name_Zahlungsbeteiligter
+	Wave Betrag
+	Make/O/N=0/T Unkateg_Name_Zahlungsbeteiligter, Unkateg_Verwendungszweck
+	Make/O/N=0 Unkateg_Betrag
+	int iBuchung
+	int nBuchungen = DimSize(Betrag, 0)	
+	for(iBuchung = 0; iBuchung < nBuchungen; iBuchung += 1)
+		if(StringMatch("", Typ[iBuchung]))
+			appendTo_T(Name_Zahlungsbeteiligter[iBuchung], Unkateg_Name_Zahlungsbeteiligter)
+			appendTo_T(Verwendungszweck[iBuchung], Unkateg_Verwendungszweck)
+			appendTo(Betrag[iBuchung], Unkateg_Betrag)
+		endif
+	endfor
 End
 //=================================================================
 Function BarChart()
