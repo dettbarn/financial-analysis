@@ -1,35 +1,16 @@
 ﻿#pragma TextEncoding = "UTF-8"
 #pragma rtGlobals=3		// Use modern global access method and strict wave access.
 
-function analyse()	
+Function analyse()
 	SetDataFolder root:
 	
 	assignTypeWherePatternMatches()
 	
-	// collect amounts for types
-	Wave/T Verwendungszweck, Typ
-	Wave Betrag
-	Make/O/N=0/T GesamtTyp
-	Make/O/N=0 GesamtBetrag
-	int i
-	int nBuchungen = DimSize(Betrag, 0)
-	for(i = 0; i < nBuchungen; i += 1)
-		int found = 0
-		int ityp
-		for(ityp = 0; ityp < DimSize(GesamtTyp, 0); ityp += 1)
-			if(StringMatch(Typ[i], GesamtTyp[ityp]))
-				found = 1
-				GesamtBetrag[ityp] += Betrag[i]
-			endif
-		endfor
-		if(found != 1)
-			appendTo(Betrag[i], GesamtBetrag)
-			appendTo_T(Typ[i], GesamtTyp)
-		endif
-	endfor	
+	collectAmountsForTypes()
 	
 	// assign groups
-	Wave/T GesamtGruppe, MapTypGruppe
+	Wave/T GesamtTyp, GesamtGruppe, MapTypGruppe
+	int i
 	int iptr
 	for(i = 0; i < DimSize(GesamtTyp, 0); i += 1)
 		for(iptr = 0; iptr < DimSize(MapTypGruppe, 0); iptr += 1)
@@ -41,15 +22,18 @@ function analyse()
 	endfor
 	
 	// relate to month and sort by amount
+	Wave GesamtBetrag
 	Duplicate/O GesamtBetrag, GesamtBetragProMonat
 	GesamtBetragProMonat /= 12
 	GesamtBetragProMonat = (round(GesamtBetragProMonat*100))/100
 	SORT GesamtBetrag, GesamtBetrag, GesamtBetragProMonat, GesamtTyp, GesamtGruppe
 	
 	// look where anything is left
+	Wave/T Verwendungszweck, Typ, Name_Zahlungsbeteiligter
+	Wave Betrag
 	Make/O/N=0/T Unkateg_Name_Zahlungsbeteiligter, Unkateg_Verwendungszweck
 	Make/O/N=0 Unkateg_Betrag
-	WAVE/T Name_Zahlungsbeteiligter	
+	int nBuchungen = DimSize(Betrag, 0)	
 	for(i = 0; i < nBuchungen; i += 1)
 		if(StringMatch("", Typ[i]))
 			appendTo_T(Name_Zahlungsbeteiligter[i], Unkateg_Name_Zahlungsbeteiligter)
@@ -63,7 +47,7 @@ function analyse()
 	Make/O/N=0 GruppenBetragProMonat
 	int total = DimSize(GesamtTyp, 0)
 	for(i = 0; i < total; i += 1)
-		found = 0
+		int found = 0
 		int igruppe
 		for(igruppe = 0; igruppe < DimSize(Gruppen, 0); igruppe += 1)
 			if(StringMatch(GesamtGruppe[i], Gruppen[igruppe]))
@@ -83,7 +67,7 @@ function analyse()
 	
 	// expenses are positive
 	GesamtBetragProMonat = -GesamtBetragProMonat
-	GruppenBetragProMonat = -GruppenBetragProMonat		
+	GruppenBetragProMonat = -GruppenBetragProMonat
 end
 //=================================================================
 Function assignTypeWherePatternMatches()
@@ -118,6 +102,30 @@ Function assignTypeWherePatternMatches()
 	print match , "/", nBuchungen, "    (", matchPercentage, "%)"
 End
 //=================================================================
+Function collectAmountsForTypes()
+	Wave/T Typ
+	Wave Betrag
+	Make/O/N=0/T GesamtTyp
+	Make/O/N=0 GesamtBetrag
+	int iBuchung
+	int nBuchungen = DimSize(Betrag, 0)
+	
+	for(iBuchung = 0; iBuchung < nBuchungen; iBuchung += 1)
+		int found = 0
+		int iTyp
+		for(iTyp = 0; iTyp < DimSize(GesamtTyp, 0); iTyp += 1)
+			if(StringMatch(Typ[iBuchung], GesamtTyp[iTyp]))
+				found = 1
+				GesamtBetrag[iTyp] += Betrag[iBuchung]
+			endif
+		endfor
+		if(found != 1)
+			appendTo(Betrag[iBuchung], GesamtBetrag)
+			appendTo_T(Typ[iBuchung], GesamtTyp)
+		endif
+	endfor
+End
+//=================================================================
 Function BarChart()
 	wave GruppenBetragProMonat
 	wave/T Gruppen
@@ -135,7 +143,7 @@ Function BarChart()
 	ModifyGraph grid(left)=2,mirror(left)=3,nticks(bottom)=0,minor(left)=1,userticks(bottom)=0
 End
 //=================================================================
-function showGroups()
+Function showGroups()
 	wave/T Gruppen,GesamtTyp,GesamtGruppe
 	wave GruppenBetragProMonat,GesamtBetragProMonat
 	variable iGruppe, iTyp
