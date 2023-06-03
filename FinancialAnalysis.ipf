@@ -4,24 +4,14 @@
 Function analyse()
 	SetDataFolder root:
 	
-	assignTypeWherePatternMatches()
+	assignTypes()
 	
 	collectAmountsForTypes()
 	
-	// assign groups
-	Wave/T GesamtTyp, GesamtGruppe, MapTypGruppe
-	int i
-	int iptr
-	for(i = 0; i < DimSize(GesamtTyp, 0); i += 1)
-		for(iptr = 0; iptr < DimSize(MapTypGruppe, 0); iptr += 1)
-			if(StringMatch(GesamtTyp[i], MapTypGruppe[iptr][0]))
-				GesamtGruppe[i] = MapTypGruppe[iptr][1]
-				break
-			endif
-		endfor
-	endfor
+	assignGroups()
 	
 	// relate to month and sort by amount
+	Wave/T GesamtTyp, GesamtGruppe
 	Wave GesamtBetrag
 	Duplicate/O GesamtBetrag, GesamtBetragProMonat
 	GesamtBetragProMonat /= 12
@@ -33,6 +23,7 @@ Function analyse()
 	Wave Betrag
 	Make/O/N=0/T Unkateg_Name_Zahlungsbeteiligter, Unkateg_Verwendungszweck
 	Make/O/N=0 Unkateg_Betrag
+	int i
 	int nBuchungen = DimSize(Betrag, 0)	
 	for(i = 0; i < nBuchungen; i += 1)
 		if(StringMatch("", Typ[i]))
@@ -70,7 +61,7 @@ Function analyse()
 	GruppenBetragProMonat = -GruppenBetragProMonat
 end
 //=================================================================
-Function assignTypeWherePatternMatches()
+Function assignTypes()
 	WAVE/T Verwendungszweck, Patterns, Typen, Name_Zahlungsbeteiligter
 	WAVE Betrag
 	SVAR/SDFR=root:config accountOwner
@@ -123,6 +114,20 @@ Function collectAmountsForTypes()
 			appendTo(Betrag[iBuchung], GesamtBetrag)
 			appendTo_T(Typ[iBuchung], GesamtTyp)
 		endif
+	endfor
+End
+//=================================================================
+Function assignGroups()
+	Wave/T GesamtTyp, GesamtGruppe, MapTypGruppe
+	int iTyp
+	int iPattern
+	for(iTyp = 0; iTyp < DimSize(GesamtTyp, 0); iTyp += 1)
+		for(iPattern = 0; iPattern < DimSize(MapTypGruppe, 0); iPattern += 1)
+			if(StringMatch(GesamtTyp[iTyp], MapTypGruppe[iPattern][0]))
+				GesamtGruppe[iTyp] = MapTypGruppe[iPattern][1]
+				break
+			endif
+		endfor
 	endfor
 End
 //=================================================================
