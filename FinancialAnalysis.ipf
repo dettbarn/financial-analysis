@@ -93,7 +93,7 @@ Function assignTypeWherePatternMatches()
 	Duplicate/O/T Verwendungszweck Typ
 	Typ = ""
 	int iBuchung, iPattern
-	int nomatch = 0
+	int noMatch = 0
 	int nBuchungen = DimSize(Betrag, 0)
 	int nPatterns = DimSize(Patterns, 0)
 	
@@ -108,17 +108,17 @@ Function assignTypeWherePatternMatches()
 				break
 			endif
 			if(iPattern == nPatterns - 1) // last pattern checked, nothing found
-				nomatch += 1
+				noMatch += 1
 			endif
 		endfor
 	endfor
 	
-	Variable match = nBuchungen - nomatch
+	Variable match = nBuchungen - noMatch
 	Variable matchPercentage = 100*match/nBuchungen
 	print match , "/", nBuchungen, "    (", matchPercentage, "%)"
 End
 //=================================================================
-Function Graph0()
+Function BarChart()
 	wave GruppenBetragProMonat
 	wave/T Gruppen
 	Display /W=(35.25,41.75,1368,404.75) GruppenBetragProMonat
@@ -138,16 +138,16 @@ End
 function showGroups()
 	wave/T Gruppen,GesamtTyp,GesamtGruppe
 	wave GruppenBetragProMonat,GesamtBetragProMonat
-	variable i,j
+	variable iGruppe, iTyp
 		
 	// nun Gruppen breakdown
-	for(i=0; i < dimsize(Gruppen,0); i+=1)
-		string thisGroup = Gruppen[i]
-		print thisgroup, "(gesamt ", GruppenBetragProMonat[i], ")"
+	for(iGruppe = 0; iGruppe < dimsize(Gruppen, 0); iGruppe += 1)
+		string thisGroup = Gruppen[iGruppe]
+		print thisgroup, "(gesamt ", GruppenBetragProMonat[iGruppe], ")"
 		
-		for(j=0; j<dimsize(GesamtTyp,0); j+=1)
-			if(StringMatch(GesamtGruppe[j], thisGroup))
-				print "    ", GesamtTyp[j], "( ", GesamtBetragProMonat[j], ")"
+		for(iTyp=0; iTyp<dimsize(GesamtTyp,0); iTyp+=1)
+			if(StringMatch(GesamtGruppe[iTyp], thisGroup))
+				print "    ", GesamtTyp[iTyp], "( ", GesamtBetragProMonat[iTyp], ")"
 			endif		
 		endfor
 	endfor
