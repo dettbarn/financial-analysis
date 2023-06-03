@@ -10,13 +10,7 @@ Function analyse()
 	
 	assignGroups()
 	
-	// relate to month and sort by amount
-	Wave/T GesamtTyp, GesamtGruppe
-	Wave GesamtBetrag
-	Duplicate/O GesamtBetrag, GesamtBetragProMonat
-	GesamtBetragProMonat /= 12
-	GesamtBetragProMonat = (round(GesamtBetragProMonat*100))/100
-	SORT GesamtBetrag, GesamtBetrag, GesamtBetragProMonat, GesamtTyp, GesamtGruppe
+	relateToMonthAndSortByAmount()
 	
 	// look where anything is left
 	Wave/T Verwendungszweck, Typ, Name_Zahlungsbeteiligter
@@ -34,6 +28,8 @@ Function analyse()
 	endfor
 
 	// collect amounts for groups
+	Wave/T GesamtTyp, GesamtGruppe
+	Wave GesamtBetragProMonat
 	Make/O/N=0/T Gruppen
 	Make/O/N=0 GruppenBetragProMonat
 	int total = DimSize(GesamtTyp, 0)
@@ -129,6 +125,15 @@ Function assignGroups()
 			endif
 		endfor
 	endfor
+End
+//=================================================================
+Function relateToMonthAndSortByAmount()
+	Wave/T GesamtTyp, GesamtGruppe
+	Wave GesamtBetrag
+	Duplicate/O GesamtBetrag, GesamtBetragProMonat
+	GesamtBetragProMonat /= 12
+	GesamtBetragProMonat = (round(GesamtBetragProMonat*100))/100
+	SORT GesamtBetrag, GesamtBetrag, GesamtBetragProMonat, GesamtTyp, GesamtGruppe
 End
 //=================================================================
 Function BarChart()
