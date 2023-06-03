@@ -13,31 +13,12 @@ Function analyse()
 	relateToMonthAndSortByAmount()
 	
 	collectUncategorizedTransactions()
-
-	// collect amounts for groups
-	Wave/T GesamtTyp, GesamtGruppe
-	Wave GesamtBetragProMonat
-	Make/O/N=0/T Gruppen
-	Make/O/N=0 GruppenBetragProMonat
-	int i
-	int total = DimSize(GesamtTyp, 0)
-	for(i = 0; i < total; i += 1)
-		int found = 0
-		int igruppe
-		for(igruppe = 0; igruppe < DimSize(Gruppen, 0); igruppe += 1)
-			if(StringMatch(GesamtGruppe[i], Gruppen[igruppe]))
-				found = 1
-				GruppenBetragProMonat[igruppe] += GesamtBetragProMonat[i]
-				break
-			endif
-		endfor
-		if(found != 1)
-			appendTo(GesamtBetragProMonat[i], GruppenBetragProMonat)
-			appendTo_T(GesamtGruppe[i], Gruppen)
-		endif
-	endfor
+	
+	collectAmountsForGroups()
 	
 	// sort amounts of groups
+	Wave/T Gruppen
+	Wave GruppenBetragProMonat, GesamtBetragProMonat
 	SORT GruppenBetragProMonat, GruppenBetragProMonat, Gruppen
 	
 	// expenses are positive
@@ -136,6 +117,30 @@ Function collectUncategorizedTransactions()
 			appendTo_T(Name_Zahlungsbeteiligter[iBuchung], Unkateg_Name_Zahlungsbeteiligter)
 			appendTo_T(Verwendungszweck[iBuchung], Unkateg_Verwendungszweck)
 			appendTo(Betrag[iBuchung], Unkateg_Betrag)
+		endif
+	endfor
+End
+//=================================================================
+Function collectAmountsForGroups()
+	Wave/T GesamtTyp, GesamtGruppe
+	Wave GesamtBetragProMonat
+	Make/O/N=0/T Gruppen
+	Make/O/N=0 GruppenBetragProMonat
+	int iTyp
+	int total = DimSize(GesamtTyp, 0)
+	for(iTyp = 0; iTyp < total; iTyp += 1)
+		int found = 0
+		int iGruppe
+		for(iGruppe = 0; iGruppe < DimSize(Gruppen, 0); iGruppe += 1)
+			if(StringMatch(GesamtGruppe[iTyp], Gruppen[iGruppe]))
+				found = 1
+				GruppenBetragProMonat[iGruppe] += GesamtBetragProMonat[iTyp]
+				break
+			endif
+		endfor
+		if(found != 1)
+			appendTo(GesamtBetragProMonat[iTyp], GruppenBetragProMonat)
+			appendTo_T(GesamtGruppe[iTyp], Gruppen)
 		endif
 	endfor
 End
